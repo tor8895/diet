@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>飲食紀錄 V6.0</title>
+    <title>飲食紀錄 V6.1 (雲端版)</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -31,7 +31,6 @@
 
         h1 { text-align: center; font-size: 1.5rem; margin-bottom: 25px; font-weight: 800; letter-spacing: 1px; }
 
-        /* 卡片容器 */
         .card {
             background: var(--card-bg);
             border-radius: 18px;
@@ -53,7 +52,6 @@
             gap: 6px;
         }
 
-        /* 輸入框優化 */
         input[type="number"] {
             width: 100%;
             border: none;
@@ -67,36 +65,44 @@
             box-sizing: border-box;
             outline: none;
             transition: all 0.2s;
-            font-family: monospace; /* 讓數字等寬更好看 */
+            font-family: monospace;
         }
-        input:focus { 
-            background: #e5e5ea; 
-            transform: scale(1.01);
-        }
+        input:focus { background: #e5e5ea; transform: scale(1.01); }
         
-        /* 不同數據的顏色標示 */
         #in_weight { color: #1c1c1e; }
-        #in_calories { color: #ff9f0a; } /* 橘色 (熱量) */
-        #in_protein { color: #007aff; }  /* 藍色 (蛋白質) */
-        #in_deficit { color: #34c759; }  /* 綠色 (赤字) */
+        #in_calories { color: #ff9f0a; } 
+        #in_protein { color: #007aff; }  
+        #in_deficit { color: #34c759; } 
 
-        /* 重置按鈕 */
-        .btn-reset {
-            width: 100%;
-            background: white;
-            border: 2px solid #ff3b30;
-            color: #ff3b30;
+        /* 按鈕區 */
+        .btn-group { display: flex; gap: 10px; margin-top: 30px; }
+        
+        .btn {
+            flex: 1;
             padding: 14px;
             border-radius: 14px;
             font-size: 1rem;
             font-weight: 700;
-            margin-top: 30px;
             cursor: pointer;
-            transition: background 0.2s;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .btn-upload {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,122,255,0.3);
+        }
+        .btn-upload:active { transform: scale(0.95); opacity: 0.8; }
+        .btn-upload:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+
+        .btn-reset {
+            background: white;
+            border: 2px solid #ff3b30;
+            color: #ff3b30;
         }
         .btn-reset:active { background: #fff0f0; }
 
-        /* 網格佈局 (2x2) */
         .grid-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -130,15 +136,23 @@
         </div>
     </div>
 
-    <button class="btn-reset" onclick="resetData()">🗑️ 清空今日紀錄</button>
+    <div class="btn-group">
+        <button class="btn btn-reset" onclick="resetData()">🗑️ 清空</button>
+        <button class="btn btn-upload" id="btnUpload" onclick="uploadToSheet()">☁️ 上傳紀錄</button>
+    </div>
 
     <script>
-        // --- 初始化 ---
+        // ==========================================
+        //  請在這裡貼上你的 Apps Script 網址
+        // ==========================================
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzNfXRjBSvqWSP7W-TGtGYj8PEEmO5wzHiGlzr074m0pqTNWRmd6ndwxHRCMH5VI2At-A/exec"; 
+        // 例如: "https://script.google.com/macros/s/AKfycbx.../exec"
+
+
         window.onload = function() {
             loadData();
         };
 
-        // 讀取紀錄
         function loadData() {
             const saved = JSON.parse(localStorage.getItem('diet_record_v6')) || {};
             if (saved.weight) document.getElementById('in_weight').value = saved.weight;
@@ -147,7 +161,6 @@
             if (saved.protein) document.getElementById('in_protein').value = saved.protein;
         }
 
-        // 儲存紀錄 (隨打隨存)
         function saveData() {
             const data = {
                 weight: document.getElementById('in_weight').value,
@@ -158,7 +171,6 @@
             localStorage.setItem('diet_record_v6', JSON.stringify(data));
         }
 
-        // 清空
         function resetData() {
             if(confirm("確定要清空所有欄位嗎？")) {
                 document.getElementById('in_weight').value = '';
@@ -167,6 +179,53 @@
                 document.getElementById('in_protein').value = '';
                 localStorage.removeItem('diet_record_v6');
             }
+        }
+
+        // --- 上傳功能 ---
+        function uploadToSheet() {
+            const btn = document.getElementById('btnUpload');
+            const data = {
+                weight: document.getElementById('in_weight').value,
+                deficit: document.getElementById('in_deficit').value,
+                calories: document.getElementById('in_calories').value,
+                protein: document.getElementById('in_protein').value
+            };
+
+            // 簡單防呆
+            if(!data.weight && !data.calories) {
+                alert("至少輸入個體重或熱量吧？");
+                return;
+            }
+
+            if(GOOGLE_SCRIPT_URL === "https://script.google.com/macros/s/AKfycbzNfXRjBSvqWSP7W-TGtGYj8PEEmO5wzHiGlzr074m0pqTNWRmd6ndwxHRCMH5VI2At-A/exec" || GOOGLE_SCRIPT_URL === "") {
+                alert("請先修改程式碼，填入你的 Google Apps Script 網址！");
+                return;
+            }
+
+            // UI 狀態更新
+            btn.disabled = true;
+            btn.innerText = "上傳中...";
+
+            // 使用 fetch 發送 POST 請求
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors", // 重要：解決跨域問題
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                alert("✅ 上傳成功！");
+                btn.disabled = false;
+                btn.innerText = "☁️ 上傳紀錄";
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("❌ 上傳失敗，請檢查網路或網址。");
+                btn.disabled = false;
+                btn.innerText = "☁️ 上傳紀錄";
+            });
         }
     </script>
 </body>
