@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>飲食紀錄 V6.1 (雲端版)</title>
+    <title>飲食紀錄 V6.2.2</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -74,7 +74,6 @@
         #in_protein { color: #007aff; }  
         #in_deficit { color: #34c759; } 
 
-        /* 按鈕區 */
         .btn-group { display: flex; gap: 10px; margin-top: 30px; }
         
         .btn {
@@ -143,11 +142,9 @@
 
     <script>
         // ==========================================
-        //  請在這裡貼上你的 Apps Script 網址
+        //  已填入正確網址，不需修改
         // ==========================================
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzNfXRjBSvqWSP7W-TGtGYj8PEEmO5wzHiGlzr074m0pqTNWRmd6ndwxHRCMH5VI2At-A/exec"; 
-        // 例如: "https://script.google.com/macros/s/AKfycbx.../exec"
-
 
         window.onload = function() {
             loadData();
@@ -191,14 +188,15 @@
                 protein: document.getElementById('in_protein').value
             };
 
-            // 簡單防呆
+            // 1. 基本資料檢查
             if(!data.weight && !data.calories) {
-                alert("至少輸入個體重或熱量吧？");
+                alert("請至少輸入體重或熱量資料！");
                 return;
             }
 
-            if(GOOGLE_SCRIPT_URL === "https://script.google.com/macros/s/AKfycbzNfXRjBSvqWSP7W-TGtGYj8PEEmO5wzHiGlzr074m0pqTNWRmd6ndwxHRCMH5VI2At-A/exec" || GOOGLE_SCRIPT_URL === "") {
-                alert("請先修改程式碼，填入你的 Google Apps Script 網址！");
+            // 2. 網址檢查 (已修正邏輯，只檢查是否為空)
+            if(GOOGLE_SCRIPT_URL === "") {
+                alert("程式碼中的網址是空的，請確認！");
                 return;
             }
 
@@ -209,9 +207,9 @@
             // 使用 fetch 發送 POST 請求
             fetch(GOOGLE_SCRIPT_URL, {
                 method: "POST",
-                mode: "no-cors", // 重要：解決跨域問題
+                mode: "no-cors", 
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "text/plain;charset=utf-8"
                 },
                 body: JSON.stringify(data)
             })
@@ -222,7 +220,7 @@
             })
             .catch(error => {
                 console.error("Error:", error);
-                alert("❌ 上傳失敗，請檢查網路或網址。");
+                alert("❌ 上傳失敗，請檢查網路。");
                 btn.disabled = false;
                 btn.innerText = "☁️ 上傳紀錄";
             });
