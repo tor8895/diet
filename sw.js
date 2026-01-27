@@ -1,4 +1,4 @@
-const CACHE_NAME = '飲食紀錄 V6.0';
+const CACHE_NAME = '飲食紀錄 V6.1';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -32,3 +32,4 @@ self.addEventListener('activate', (event) => {
     );
 
 });
+
