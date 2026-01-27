@@ -1,4 +1,4 @@
-const CACHE_NAME = 'diet-tracker-v1';
+const CACHE_NAME = '飲食紀錄 V6.0';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -30,4 +30,5 @@ self.addEventListener('activate', (event) => {
             }));
         })
     );
+
 });
